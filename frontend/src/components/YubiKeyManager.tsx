@@ -247,11 +247,11 @@ export default function YubiKeyManager() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 items-center">
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
               <Button
                 onClick={() => loadYubiKeys()}
                 disabled={loading}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 <RefreshCw
                   className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -262,7 +262,7 @@ export default function YubiKeyManager() {
               <Button
                 variant="outline"
                 onClick={loadDatabaseKeys}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 <Database className="h-4 w-4" />
                 Refresh Database
