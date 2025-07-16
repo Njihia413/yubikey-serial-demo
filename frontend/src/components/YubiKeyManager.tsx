@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, Key, Database, Activity, Loader2 } from "lucide-react";
+import { Shield, Key, Database, Activity } from "lucide-react";
 import { BounceLoader } from "react-spinners";
 
 // Updated API interface
