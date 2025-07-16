@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, Key, Database, Activity } from "lucide-react";
+import { Shield, Key, Database, Activity, Loader2 } from "lucide-react";
 
 // Updated API interface
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -115,12 +115,17 @@ export default function YubiKeyManager() {
   const [selectedKey, setSelectedKey] = useState<YubiKeyInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DatabaseStats | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const loadDatabaseKeys = useCallback(async () => {
+    setIsRefreshing(true);
+    setError(null);
     try {
       const keys = await YubiKeyAPI.getDatabaseYubiKeys();
       setDatabaseKeys(keys);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsRefreshing(false);
     }
   }, []);
 
@@ -286,10 +291,15 @@ export default function YubiKeyManager() {
               <Button
                 variant="default"
                 onClick={loadDatabaseKeys}
+                disabled={isRefreshing}
                 className="flex items-center justify-center gap-2 w-full sm:w-auto"
               >
-                <Database className="h-4 w-4" />
-                Refresh Database
+                {isRefreshing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Database className="h-4 w-4" />
+                )}
+                {isRefreshing ? "Refreshing..." : "Refresh Database"}
               </Button>
             </div>
           </CardContent>
@@ -374,7 +384,11 @@ export default function YubiKeyManager() {
               <CardDescription>Previously detected YubiKeys</CardDescription>
             </CardHeader>
             <CardContent>
-              {databaseKeys.length === 0 ? (
+              {isRefreshing ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-12 w-12 mx-auto animate-spin text-purple-600" />
+                </div>
+              ) : databaseKeys.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No YubiKeys in database</p>
