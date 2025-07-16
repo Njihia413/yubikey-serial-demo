@@ -3,15 +3,25 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_session import Session
+from flask_socketio import SocketIO, emit
 import subprocess
 import json
 import logging
 import os
 from datetime import datetime, timedelta
 from sqlalchemy import func
+from threading import Lock
+import time
+
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Background task for monitoring YubiKeys
+thread = None
+thread_lock = Lock()
+connected_clients = 0
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost/yubikey_manager'
@@ -421,9 +431,68 @@ def init_database():
         }), 500
 
 
+def yubikey_monitor_task():
+    """Background task to monitor YubiKey connections."""
+    previous_serials = set()
+    while True:
+        try:
+            with app.app_context():
+                # Get current YubiKeys
+                output = run_ykman_command(['list', '--serials'])
+                if output:
+                    current_serials = set(int(s) for s in output.split('\n') if s.strip())
+                else:
+                    current_serials = set()
+
+                # Check for changes
+                if current_serials != previous_serials:
+                    print(f"Change detected: {previous_serials} -> {current_serials}")
+                    # Fetch full details for current keys
+                    yubikeys = []
+                    for serial in current_serials:
+                        try:
+                            info_output = run_ykman_command(['--device', str(serial), 'info'])
+                            info = parse_yubikey_info(info_output)
+                            info['serial'] = serial
+                            info['is_fips'] = 'FIPS' in info_output
+                            info['is_sky'] = 'SKY' in info_output
+                            yubikeys.append(info)
+                            save_yubikey_to_db(info, info_output)
+                        except Exception as e:
+                            print(f"Could not get info for {serial}: {e}")
+                            yubikeys.append({'serial': serial, 'version': 'Unknown', 'form_factor': 'Unknown', 'device_type': 'YubiKey', 'is_fips': False, 'is_sky': False})
+
+                    # Emit update to clients
+                    socketio.emit('yubikeys_update', {'yubikeys': yubikeys})
+                    previous_serials = current_serials
+
+        except Exception as e:
+            print(f"Error in monitor task: {e}")
+
+        socketio.sleep(2)  # Check every 2 seconds
+
+
+@socketio.on('connect')
+def handle_connect():
+    global thread, connected_clients
+    with thread_lock:
+        connected_clients += 1
+        if thread is None:
+            thread = socketio.start_background_task(yubikey_monitor_task)
+            print("Started background task.")
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    global connected_clients
+    with thread_lock:
+        connected_clients -= 1
+        print(f"Client disconnected. Remaining clients: {connected_clients}")
+
+
 if __name__ == '__main__':
     # Create tables if they don't exist
     with app.app_context():
         db.create_all()
 
-    app.run(debug=True, port=5000)
+    socketio.run(app, debug=True, port=5000)
