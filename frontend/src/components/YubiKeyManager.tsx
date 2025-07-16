@@ -393,7 +393,7 @@ export default function YubiKeyManager() {
                 <div className="text-center py-8 text-gray-500">
                   <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No YubiKeys in database</p>
-                  <p className="text-sm">Scan devices to populate database</p>
+                  <p className="text-sm">Connect devices to populate database</p>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
