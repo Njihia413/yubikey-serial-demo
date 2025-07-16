@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { RefreshCw, Shield, Key, Database, Activity } from "lucide-react";
+import { Shield, Key, Database, Activity } from "lucide-react";
 
 // Updated API interface
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -113,7 +113,6 @@ export default function YubiKeyManager() {
   const [yubiKeys, setYubiKeys] = useState<YubiKey[]>([]);
   const [databaseKeys, setDatabaseKeys] = useState<YubiKeyInfo[]>([]);
   const [selectedKey, setSelectedKey] = useState<YubiKeyInfo | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DatabaseStats | null>(null);
   const loadDatabaseKeys = useCallback(async () => {
@@ -135,7 +134,6 @@ export default function YubiKeyManager() {
   }, []);
 
   const loadYubiKeys = useCallback(async () => {
-    setLoading(true);
     setError(null);
 
     try {
@@ -146,7 +144,6 @@ export default function YubiKeyManager() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
-      setLoading(false);
     }
   }, [loadDatabaseKeys, loadStats]);
 
