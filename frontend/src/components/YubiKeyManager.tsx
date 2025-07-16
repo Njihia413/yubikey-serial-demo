@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, Key, Database, Activity, Loader2 } from "lucide-react";
+import { BounceLoader } from "react-spinners";
 
 // Updated API interface
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -295,7 +296,7 @@ export default function YubiKeyManager() {
                 className="flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 {isRefreshing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <BounceLoader size={20} color="#ffffff" />
                 ) : (
                   <Database className="h-4 w-4" />
                 )}
@@ -386,7 +387,7 @@ export default function YubiKeyManager() {
             <CardContent>
               {isRefreshing ? (
                 <div className="flex justify-center items-center py-8">
-                  <Loader2 className="h-12 w-12 mx-auto animate-spin text-purple-600" />
+                  <BounceLoader color="#8B5CF6" />
                 </div>
               ) : databaseKeys.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
