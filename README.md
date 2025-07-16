@@ -45,6 +45,11 @@ The frontend is a Next.js application that provides the user interface for inter
 -   [TypeScript](https://www.typescriptlang.org/) (v5) - Superset of JavaScript that adds static typing.
 -   [Tailwind CSS](https://tailwindcss.com/) (v4) - Utility-first CSS framework.
 -   [ESLint](https://eslint.org/) (v9) - Pluggable JavaScript linter.
+-   [Shadcn UI](https://ui.shadcn.com/) - A collection of re-usable components built using Radix UI and Tailwind CSS. The following components are used:
+    -   Alert
+    -   Badge
+    -   Button
+    -   Card
 
 ### Setup and Installation
 
