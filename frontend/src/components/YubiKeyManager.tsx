@@ -329,7 +329,7 @@ export default function YubiKeyManager() {
                 <div className="text-center py-8 text-gray-500">
                   <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No YubiKeys found</p>
-                  <p className="text-sm">Connect a YubiKey and click scan</p>
+                  <p className="text-sm">Connect a YubiKey to view its details</p>
                 </div>
               ) : (
                 <div className="space-y-3">
