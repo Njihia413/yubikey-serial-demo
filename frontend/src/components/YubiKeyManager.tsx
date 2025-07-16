@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { io } from "socket.io-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -115,56 +116,93 @@ export default function YubiKeyManager() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DatabaseStats | null>(null);
-  const loadYubiKeys = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const keys = await YubiKeyAPI.listYubiKeys(true); // Always auto-save
-      setYubiKeys(keys);
-      await loadDatabaseKeys(); // Reload database keys after auto-save
-      await loadStats();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadDatabaseKeys = async () => {
+  const loadDatabaseKeys = useCallback(async () => {
     try {
       const keys = await YubiKeyAPI.getDatabaseYubiKeys();
       setDatabaseKeys(keys);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     }
-  };
+  }, []);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const statsData = await YubiKeyAPI.getDatabaseStats();
       setStats(statsData);
     } catch (err) {
       console.error("Failed to load stats:", err);
     }
-  };
+  }, []);
 
-  const selectYubiKey = async (serial: number) => {
+  const loadYubiKeys = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      const info = await YubiKeyAPI.getYubiKeyInfo(serial, true); // Always auto-save
-      setSelectedKey(info);
-      await loadDatabaseKeys(); // Reload database keys after auto-save
+      const keys = await YubiKeyAPI.listYubiKeys(true); // Always auto-save
+      setYubiKeys(keys);
+      await loadDatabaseKeys();
       await loadStats();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [loadDatabaseKeys, loadStats]);
+
+  const selectYubiKey = useCallback(
+    async (serial: number) => {
+      try {
+        const info = await YubiKeyAPI.getYubiKeyInfo(serial, true); // Always auto-save
+        setSelectedKey(info);
+        await loadDatabaseKeys(); // Reload database keys after auto-save
+        await loadStats();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      }
+    },
+    [loadDatabaseKeys, loadStats]
+  );
 
   useEffect(() => {
+    const socket = io(API_BASE_URL);
+
+    socket.on("connect", () => {
+      console.log("Connected to WebSocket");
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected from WebSocket");
+    });
+
+    const handleYubiKeysUpdate = (data: { yubikeys: YubiKey[] }) => {
+      console.log("Received yubikeys_update:", data);
+      setYubiKeys(data.yubikeys || []);
+      loadDatabaseKeys();
+      loadStats();
+    };
+
+    socket.on("yubikeys_update", handleYubiKeysUpdate);
+
+    // Initial data load
     loadYubiKeys();
-    loadDatabaseKeys();
-    loadStats();
-  }, []);
+
+    return () => {
+      socket.off("yubikeys_update", handleYubiKeysUpdate);
+      socket.disconnect();
+    };
+  }, [loadYubiKeys, loadDatabaseKeys, loadStats]);
+
+  // This effect handles the logic of clearing the selected key
+  useEffect(() => {
+    // If a key is selected but it's no longer in the connected list, deselect it.
+    if (
+      selectedKey &&
+      !yubiKeys.some((key) => key.serial === selectedKey.serial)
+    ) {
+      setSelectedKey(null);
+    }
+  }, [yubiKeys, selectedKey]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -248,17 +286,6 @@ export default function YubiKeyManager() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-              <Button
-                onClick={() => loadYubiKeys()}
-                disabled={loading}
-                className="flex items-center justify-center gap-2 w-full sm:w-auto"
-              >
-                <RefreshCw
-                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-                />
-                {loading ? "Scanning..." : "Scan YubiKeys"}
-              </Button>
-
               <Button
                 variant="outline"
                 onClick={loadDatabaseKeys}
