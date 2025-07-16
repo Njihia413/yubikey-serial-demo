@@ -8,6 +8,7 @@ This project is a full-stack application designed to interact with YubiKeys, ret
   - [Table of Contents](#table-of-contents)
   - [Project Overview](#project-overview)
   - [Features](#features)
+  - [Screenshots](#screenshots)
   - [Frontend (Next.js)](#frontend-nextjs)
     - [Technologies Used](#technologies-used)
     - [Setup and Installation](#setup-and-installation)
@@ -33,6 +34,22 @@ This application provides a user interface to list connected YubiKeys, view thei
 -   **Database Integration**: Stores YubiKey information and detection history in a PostgreSQL database.
 -   **API Endpoints**: Provides RESTful APIs for YubiKey management and data retrieval.
 -   **User Interface**: A modern web interface built with Next.js and React.
+
+## Screenshots
+
+Here are a couple of screenshots showing the application in action.
+
+### Dashboard View
+
+This view shows the main dashboard with statistics about the YubiKeys.
+
+![Dashboard View](frontend/public/dashboard.png)
+
+### Device Details View
+
+This view shows the detailed information for a specific YubiKey.
+
+![Device Details View](frontend/public/details.png)
 
 ## Frontend (Next.js)
 
